@@ -61,19 +61,28 @@ from authlib.integrations.flask_client import OAuth
 #! ---------- Running the Program
 #! --------------------------------------------------
 # region Running the Program
+# ? Extract environment variables
+load_dotenv()
+required = {
+    "SECRET_KEY": environ.get("SECRET_KEY"),
+    "google_client_id": environ.get("google_client_id"),
+    "google_client_secret": environ.get("google_client_secret"),
+    "link": environ.get("link"),
+}
+missing = [key for key, value in required.items() if not value]
+if missing:
+    raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
+secret_key = required["SECRET_KEY"]
+google_client_id = required["google_client_id"]
+google_client_secret = required["google_client_secret"]
+mongoLink = required["link"]
+domain = environ.get("DOMAIN", "https://trim.lol/")
+
 # ? Required.
 app = Flask(__name__)
-app.config["SECRET_KEY"] = environ.get("SECRET_KEY")
-if environ.get("DOMAIN"):
-    domain = environ.get("DOMAIN")
-else:
-    domain = "https://trim.lol/"
-    
-hasUsedApp = False
+app.config["SECRET_KEY"] = secret_key
 
-# ? Google OAuth Client ID, Secret, and Redirect URI
-google_client_id = environ.get("google_client_id")
-google_client_secret = environ.get("google_client_secret")
+hasUsedApp = False
 
 # ? Setting OAuth App
 oauth = OAuth(app)
@@ -90,8 +99,6 @@ google = oauth.register(
     client_kwargs={"scope": "email profile"},
 )
 # ? Connecting to the Mongo DB Database
-load_dotenv()
-mongoLink = environ.get("link")
 client = MongoClient(mongoLink)
 db = client["URLShorteners"]
 
@@ -180,6 +187,8 @@ def logIn():
 @app.route("/login/google")
 def login_google():
     google = oauth.create_client("google")
+    if not google:
+        raise RuntimeError("Google OAuth client not registered")
     redirect_uri = url_for("authorize_google", _external=True)
     return google.authorize_redirect(redirect_uri)
 
@@ -188,6 +197,8 @@ def login_google():
 @app.route("/authorize/google")
 def authorize_google():
     google = oauth.create_client("google")
+    if not google:
+        raise RuntimeError("Google OAuth client not registered")
     google.authorize_access_token()
     resp = google.get("userinfo")
     user_info = resp.json()
@@ -310,12 +321,12 @@ def generateurl():
                     return render_template(
                         "generateurl.html",
                         old_url=url,
-                        new_url=domain + customURL,
+                        new_url=str(domain) + customURL,
                         custom_url=customURL,
                         completed="True",
                     )
             else:
-                hashid = Hashids(min_length=5, salt=userID)
+                hashid = Hashids(min_length=5, salt=str(userID))
                 newURL = hashid.encode(id)
                 existingURLs = []
                 for document in URLsColl.find({}, {"ShortenedURL": 1}):
@@ -343,7 +354,7 @@ def generateurl():
                 return render_template(
                     "generateurl.html",
                     old_url=url,
-                    new_url=domain + newURL,
+                    new_url=str(domain) + newURL,
                     custom_url=" ",
                     completed="True",
                 )

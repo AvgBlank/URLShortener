@@ -1,11 +1,11 @@
-FROM python:3.9.20-alpine3.19
+FROM ghcr.io/astral-sh/uv:python3.13-alpine
 
 EXPOSE 5261
 
 WORKDIR /URLShortner/
 
-COPY ./requirements.txt requirements.txt
+COPY ./pyproject.toml ./pyproject.toml
 
-RUN pip install -r requirements.txt
+RUN uv sync
 
-CMD ["flask", "--app", "app", "run", "--host", "0.0.0.0", "--port", "5261"]
+CMD ["gunicorn", "app:app", "--workers", "4", "--bind", "0.0.0.0:5261"]

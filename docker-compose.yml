@@ -15,7 +15,7 @@ services:
     environment:
       link: "mongodb://database:27017/"
       SECRET_KEY: "secret"
-      google_client_id: ""
-      google_client_secret: ""
+      google_client_id: "google_client_id"
+      google_client_secret: "google_client_secret"
     env_file:
       - .env

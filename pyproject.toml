@@ -1,0 +1,18 @@
+[project]
+name = "urlshortener"
+version = "0.1.0"
+description = "A simple URL Shortener built with Flask"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "authlib>=1.6.5",
+    "flask>=3.1.2",
+    "gunicorn>=23.0.0",
+    "hashids>=1.3.1",
+    "jinja2>=3.1.6",
+    "pymongo>=4.15.4",
+    "python-dotenv>=1.2.1",
+    "pytz>=2025.2",
+    "requests>=2.32.5",
+]
+
